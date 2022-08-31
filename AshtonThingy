@@ -1,0 +1,411 @@
+from email import message
+from tkinter import *
+from tkinter import ttk
+import mysql.connector as c
+from tkinter import messagebox
+import tkinter
+
+conn = c.connect(host="localhost", user="root", password='00b')
+cs = conn.cursor()
+
+
+class PharmacyManagementSystem:
+
+    def addMed(self):
+        cs.execute("insert into pharma values(%s, %s)", (self.refmed_var.get(), self.addmed_var.get()))
+        conn.commit()
+        self.fetchDataMed()
+        self.getMed()
+        messagebox.showinfo("Success!", "Medicine Added!")
+
+    # ===================FETCH DATA=====================
+    def fetchDataMed(self):
+        cs.execute('select * from pharma')
+        rows = cs.fetchall()
+        if len(rows) != 0:
+            self.medicineTable.delete(*self.medicineTable.get_children())
+
+            for i in rows:
+                self.medicineTable.insert("", END, values=i)
+            conn.commit()
+
+    # ====================MED GET============================
+    def getMed(self, event=""):
+        cs_row = self.medicineTable.focus()
+        content = self.medicineTable.item(cs_row)
+        row = content["values"]
+        print(content)
+        self.refmed_var.set(row[0]),
+        self.addmed_var.set(row[1])
+
+    def updateMed(self):
+        if self.refmed_var.get() == "" or self.addmed_var.get() == "":
+            messagebox.showinfo("Error!", "Fill all required fields")
+
+        else:
+            cs.execute("update pharma set MedName=%s where Ref=%s", (self.addmed_var.get(), self.refmed_var.get()))
+            self.fetchDataMed()
+            messagebox.showinfo("Success!", "Data has been updated")
+
+    def deleteMed(self):
+        delete = "delete from pharma where Ref=%s"
+        val = (self.refmed_var.get(),)
+        cs.execute(delete, val)
+        self.fetchDataMed()
+        messagebox.showinfo("Success!", "Data deleted")
+
+    def clearMed(self):
+        self.refmed_var.set("")
+        self.addmed_var.set("")
+
+    # ==========================================================MAIN TABLE========================================================
+    def addData(self):
+        if self.referenceno_var.get() == "":
+            messagebox.showinfo("Error!", "All fields are required!")
+        else:
+            cs.execute("insert into pharmacy values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                       (self.referenceno_var.get(),
+                        self.patientname_var.get(),
+                        self.type_var.get(),
+                        self.medicinename_var.get(),
+                        self.issuedate_var.get(),
+                        self.expirydate_var.get(),
+                        self.warning_var.get(),
+                        self.uses_var.get(),
+                        self.dosage_var.get(),
+                        self.productqty_var.get(),
+                        self.price_var.get()))
+            conn.commit()
+            self.fetchData()
+            messagebox.showinfo("Success!", "Member added successfully!")
+
+    def deleteData(self):
+        delete = ""
+        val = (self.referenceno_var.get(),)
+        cs.execute(delete, val)
+        self.fetchDataMed()
+        messagebox.showinfo("Success!", "Data deleted")
+
+    def fetchData(self):
+        cs.execute('select * from pharmacy')
+        rows = cs.fetchall()
+        if len(rows) != 0:
+            self.pharmacyTable.delete(*self.pharmacyTable.get_children())
+            for i in rows:
+                self.pharmacyTable.insert("", END, values=i)
+            conn.commit()
+
+    def getData(self, event=""):
+        cs_row = self.pharmacyTable.focus()
+        content = self.pharmacyTable.item(cs_row)
+        row = content["values"]
+        self.referenceno_var.set(row[0]),
+        self.patientname_var.set(row[1]),
+        self.type_var.set(row[2]),
+        self.medicinename_var.set(row[3]),
+        self.issuedate_var.set(row[4]),
+        self.expirydate_var.set(row[5]),
+        self.warning_var.set(row[6]),
+        self.uses_var.set(row[7]),
+        self.dosage_var.set(row[8]),
+        self.productqty_var.set(row[9]),
+        self.price_var.set(row[10])
+
+    def __init__(self, root):
+        self.root = root
+        self.root.title('Pharmacy Management System')
+        self.root.state("zoomed")
+
+        # ========================SMALL TABLE VARIABLES=========================
+
+        self.addmed_var = StringVar()
+        self.refmed_var = StringVar()
+
+        # ======================MAIN TABLE VARIABLES==========================
+        self.referenceno_var = StringVar()
+        self.patientname_var = StringVar()
+        self.type_var = StringVar()
+        self.medicinename_var = StringVar()
+        self.issuedate_var = StringVar()
+        self.expirydate_var = StringVar()
+        self.warning_var = StringVar()
+        self.uses_var = StringVar()
+        self.dosage_var = StringVar()
+        self.productqty_var = StringVar()
+        self.price_var = StringVar()
+
+        lbltitle = Label(self.root, text="PHARMACY MANAGEMENT SYSTEM", bd=15, relief=RIDGE, bg="white", fg="dark green",
+                         font=("times new roman", 50, "bold"), padx=2, pady=4)
+        lbltitle.pack(side=TOP, fill=X)
+
+        # ===========================DATAFRAME=====================================
+
+        DataFrame = Frame(self.root, bd=15, relief=RIDGE, padx=20)
+        DataFrame.place(x=0, y=115, width=1370, height=400)
+
+        DataFrameLeft = LabelFrame(DataFrame, bd=10, relief=RIDGE, padx=20, text="Medicine Information", fg="red",
+                                   font=("arial", 12, "bold"))
+        DataFrameLeft.place(x=0, y=5, width=900, height=350)
+
+        DataFrameRight = LabelFrame(DataFrame, bd=10, relief=RIDGE, padx=20, text="Add Medicines", fg="red",
+                                    font=("arial", 12, "bold"))
+        DataFrameRight.place(x=910, y=5, width=400, height=350)
+
+        # =========================BUTTONFRAME=====================================
+
+        ButtonFrame = Frame(self.root, bd=15, relief=RIDGE, padx=20)
+        ButtonFrame.place(x=0, y=520, width=1370, height=65)
+
+        # =========================MAIN_BUTTON=====================================
+
+        btnAddData = Button(ButtonFrame, command=self.addData, text="Add Medicine", font=("arial", 12, "bold"),
+                            fg="blue", bg="grey")
+        btnAddData.grid(row=0, column=0)
+
+        btnUpdateMed = Button(ButtonFrame, text="Update", font=("arial", 12, "bold"), fg="blue", bg="grey")
+        btnUpdateMed.grid(row=0, column=1)
+
+        btnDeleteMed = Button(ButtonFrame, command=self.deleteData, text="Delete", font=("arial", 12, "bold"),
+                              fg="blue", bg="grey")
+        btnDeleteMed.grid(row=0, column=2)
+
+        btnResetMed = Button(ButtonFrame, text="Reset", font=("arial", 12, "bold"), fg="blue", bg="grey")
+        btnResetMed.grid(row=0, column=3)
+
+        btnExitMed = Button(ButtonFrame, text="Exit", font=("arial", 12, "bold"), fg="blue", bg="grey")
+        btnExitMed.grid(row=0, column=4)
+
+        # ==========================SEARCH=========================================
+
+        lblSearch = Label(ButtonFrame, text="Search by", font=("arial", 17, "bold"), fg="blue", bg="grey", padx=2)
+        lblSearch.grid(row=0, column=5, sticky=W)
+
+        searchBox = ttk.Combobox(ButtonFrame, width=15, font=("arial", 13, "bold"), state="readonly")
+        searchBox["values"] = ("Ref No", "Medicine Name")
+        searchBox.grid(row=0, column=6)
+        searchBox.set("Ref No")
+
+        txtSearch = Entry(ButtonFrame, bd=3, relief=RIDGE, width=12, font=("arial", 12, "bold"))
+        txtSearch.grid(row=0, column=7)
+
+        btnSearch = Button(ButtonFrame, text="Search", font=("arial", 12, "bold"), fg="blue", bg="grey")
+        btnSearch.grid(row=0, column=8)
+
+        showAll = Button(ButtonFrame, text="Show All", font=("arial", 12, "bold"), fg="blue", bg="grey")
+        showAll.grid(row=0, column=9)
+
+        # =================================LABEL & ENTRY==================================
+
+        lblrefno = Label(DataFrameLeft, text="Reference No: ", font=("arial", 13, "bold"), fg="purple", padx=2)
+        lblrefno.grid(row=0, column=0, sticky=W)
+
+        cs.execute("select Ref from pharma")
+        row = cs.fetchall()
+
+        refBox = ttk.Combobox(DataFrameLeft, textvariable=self.referenceno_var, width=27, font=("arial", 13, "bold"),
+                              state="readonly")
+        refBox["values"] = row
+        refBox.grid(row=0, column=1)
+        refBox.set(row[0])
+
+        lblPatientName = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Patient Name: ", padx=2, pady=6,
+                               fg="purple")
+        lblPatientName.grid(row=1, column=0, sticky=W)
+        txtPatientName = Entry(DataFrameLeft, textvariable=self.patientname_var, font=("arial", 12, "bold"), bg="white",
+                               bd=2, relief=RIDGE, width=29)
+        txtPatientName.grid(row=1, column=1)
+
+        lblTypeOfMed = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Type of Medicine: ", padx=2, pady=6,
+                             fg="purple")
+        lblTypeOfMed.grid(row=2, column=0, sticky=W)
+
+        comTypeOfMed = ttk.Combobox(DataFrameLeft, textvariable=self.type_var, state="readonly",
+                                    font=("arial", 12, "bold"), width=27)
+        comTypeOfMed["values"] = ("Tablet", "Liquids", "Capsules", "Inhalers", "Drops", "Vaccine")
+        comTypeOfMed.set("Tablet")
+        comTypeOfMed.grid(row=2, column=1)
+
+        # ================================Add_Medicine====================================
+        lblMedicineName = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Medicine Name: ", padx=2, pady=6,
+                                fg="purple")
+        lblMedicineName.grid(row=3, column=0, sticky=W)
+
+        cs.execute("select MedName from pharma")
+        med = cs.fetchall()
+
+        comMedicineName = ttk.Combobox(DataFrameLeft, state="readonly", font=("arial", 12, "bold"), width=27)
+        comMedicineName["values"] = med
+        comMedicineName.set(med[0])
+        comMedicineName.grid(row=3, column=1)
+
+        lblIssueDate = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Issue Date: ", padx=2, pady=6,
+                             fg="purple")
+        lblIssueDate.grid(row=5, column=0, sticky=W)
+        txtIssueDate = Entry(DataFrameLeft, textvariable=self.issuedate_var, font=("arial", 12, "bold"), bg="white",
+                             bd=2, relief=RIDGE, width=29)
+        txtIssueDate.grid(row=5, column=1)
+
+        lblExpiryDate = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Expiry Date: ", padx=2, pady=6,
+                              fg="purple")
+        lblExpiryDate.grid(row=6, column=0, sticky=W)
+        txtExpiryDate = Entry(DataFrameLeft, textvariable=self.expirydate_var, font=("arial", 12, "bold"), bg="white",
+                              bd=2, relief=RIDGE, width=29)
+        txtExpiryDate.grid(row=6, column=1)
+
+        lblUses = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Uses: ", padx=2, pady=6, fg="purple")
+        lblUses.grid(row=7, column=0, sticky=W)
+        txtUses = Entry(DataFrameLeft, textvariable=self.uses_var, font=("arial", 12, "bold"), bg="white", bd=2,
+                        relief=RIDGE, width=29)
+        txtUses.grid(row=7, column=1)
+
+        lblPrecWarn = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Precautions & Warning: ", padx=2, pady=6,
+                            fg="purple")
+        lblPrecWarn.grid(row=0, column=2, sticky=W)
+        txtPrecWarn = Entry(DataFrameLeft, textvariable=self.warning_var, font=("arial", 12, "bold"), bg="white", bd=2,
+                            relief=RIDGE, width=27)
+        txtPrecWarn.grid(row=0, column=3)
+
+        lblDosage = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Dosage: ", padx=2, pady=6, fg="purple")
+        lblDosage.grid(row=1, column=2, sticky=W)
+        txtDosage = Entry(DataFrameLeft, textvariable=self.dosage_var, font=("arial", 12, "bold"), bg="white", bd=2,
+                          relief=RIDGE, width=27)
+        txtDosage.grid(row=1, column=3)
+
+        lblPrice = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Price: ", padx=2, pady=6, fg="purple")
+        lblPrice.grid(row=2, column=2, sticky=W)
+        txtPrice = Entry(DataFrameLeft, textvariable=self.price_var, font=("arial", 12, "bold"), bg="white", bd=2,
+                         relief=RIDGE, width=27)
+        txtPrice.grid(row=2, column=3)
+
+        lblProductQty = Label(DataFrameLeft, font=("arial", 12, "bold"), text="Product Qty: ", padx=2, pady=6,
+                              fg="purple")
+        lblProductQty.grid(row=3, column=2, sticky=W)
+        txtProductQty = Entry(DataFrameLeft, textvariable=self.productqty_var, font=("arial", 12, "bold"), bg="white",
+                              bd=2, relief=RIDGE, width=27)
+        txtProductQty.grid(row=3, column=3, sticky=W)
+
+        # ===============================DATAFRAMERIGHT=============================
+
+        DataFrameRight = LabelFrame(DataFrame, bd=10, relief=RIDGE, padx=20, text="Add Medicines", fg="red",
+                                    font=("arial", 12, "bold"))
+        DataFrameRight.place(x=910, y=5, width=400, height=350)
+
+        lblrefno = Label(DataFrameRight, text="Reference No: ", font=("arial", 11, "bold"), fg="blue", padx=1, pady=6)
+        lblrefno.place(x=0, y=10)
+        txtrefno = Entry(DataFrameRight, textvariable=self.refmed_var, font=("arial", 12, "bold"), bg="white", bd=2,
+                         relief=RIDGE, width=25)
+        txtrefno.place(x=122, y=14)
+
+        lblMedName = Label(DataFrameRight, text="Medicine Name: ", font=("arial", 11, "bold"), fg="blue", padx=1,
+                           pady=6)
+        lblMedName.place(x=0, y=50)
+        txtMedName = Entry(DataFrameRight, textvariable=self.addmed_var, font=("arial", 12, "bold"), bg="white", bd=2,
+                           relief=RIDGE, width=25)
+        txtMedName.place(x=122, y=54)
+
+        # ===============================LITTLE_FRAME================================
+
+        sideFrame = Frame(DataFrameRight, bd=4, relief=RIDGE, bg="white")
+        sideFrame.place(x=0, y=150, width=250, height=160)
+
+        scX = ttk.Scrollbar(sideFrame, orient=HORIZONTAL)
+        scX.pack(side=BOTTOM, fill=X)
+        scY = ttk.Scrollbar(sideFrame, orient=VERTICAL)
+        scY.pack(side=RIGHT, fill=Y)
+
+        self.medicineTable = ttk.Treeview(sideFrame, column=("Ref", "MedName"), xscrollcommand=scX.set,
+                                          yscrollcommand=scY.set)
+
+        scX.config(command=self.medicineTable.xview)
+        scY.config(command=self.medicineTable.yview)
+
+        self.medicineTable.heading("Ref", text="Ref")
+        self.medicineTable.heading("MedName", text="Medicine Name")
+        self.fetchDataMed()
+
+        self.medicineTable["show"] = "headings"
+        self.medicineTable.pack(fill=BOTH, expand=1)
+
+        self.medicineTable.column("Ref", width=100)
+        self.medicineTable.column("MedName", width=100)
+
+        self.medicineTable.bind("<ButtonRelease-1>", self.getMed)
+
+        # ========================================FRAME_DETAILS===========================================
+
+        FrameDetails = Frame(self.root, bd=10, relief=RIDGE)
+        FrameDetails.place(x=0, y=590, width=1364, height=150)
+
+        # ========================================MAIN TABLE & SCROLLBAR=========================================
+
+        TableFrame = Frame(self.root, bd=10, relief=RIDGE)
+        TableFrame.place(x=30, y=600, width=1300, height=130)
+
+        scrollX = ttk.Scrollbar(TableFrame, orient=HORIZONTAL)
+        scrollX.pack(side=BOTTOM, fill=X)
+        scrollY = ttk.Scrollbar(TableFrame, orient=VERTICAL)
+        scrollY.pack(side=RIGHT, fill=Y)
+
+        self.pharmacyTable = ttk.Treeview(TableFrame, column=(
+        "Ref", "PatientName", "Type", "MedName", "IssueDate", "ExpDate", "Warning", "Uses", "Dosage", "ProductQty",
+        "Price")
+                                          , xscrollcommand=scrollX, yscrollcommand=scrollY)
+
+        scrollX.pack(side=BOTTOM, fill=X)
+        scrollY.pack(side=RIGHT, fill=Y)
+
+        scrollX.config(command=self.pharmacyTable.xview)
+        scrollY.config(command=self.pharmacyTable.yview)
+
+        self.pharmacyTable["show"] = "headings"
+
+        self.pharmacyTable.heading("Ref", text="Reference No.")
+        self.pharmacyTable.heading("PatientName", text="Patient Name")
+        self.pharmacyTable.heading("Type", text="Type")
+        self.pharmacyTable.heading("MedName", text="Medicine Name")
+        self.pharmacyTable.heading("IssueDate", text="Issue Date")
+        self.pharmacyTable.heading("ExpDate", text="Expiry Date")
+        self.pharmacyTable.heading("Warning", text="Warning")
+        self.pharmacyTable.heading("Uses", text="Uses")
+        self.pharmacyTable.heading("Dosage", text="Dosage")
+        self.pharmacyTable.heading("ProductQty", text="Product Qty")
+        self.pharmacyTable.heading("Price", text="Price")
+        self.pharmacyTable.pack(fill=BOTH, expand=1)
+        self.fetchData()
+        self.pharmacyTable.bind("<ButtonRelease-1>", self.getData)
+
+        # ===================================DFR BUTTONS=======================================
+        anotherFrame = Frame(DataFrameRight, bd=4, relief=RIDGE, bg="green")
+        anotherFrame.place(x=250, y=150, width=110, height=160)
+
+        btnAddMed = Button(anotherFrame, command=self.addMed, text="ADD", width=9, font=("arial", 12, "bold"),
+                           fg="blue", bg="grey")
+        btnAddMed.grid(row=0, column=0)
+
+        btnUpdateMed = Button(anotherFrame, command=self.updateMed, text="UPDATE", font=("arial", 12, "bold"), width=9,
+                              fg="blue", bg="grey")
+        btnUpdateMed.grid(row=1, column=0)
+
+        btnDeleteMed = Button(anotherFrame, command=self.deleteMed, text="DELETE", font=("arial", 12, "bold"), width=9,
+                              fg="blue", bg="grey")
+        btnDeleteMed.grid(row=2, column=0)
+
+        btnClearMed = Button(anotherFrame, command=self.clearMed, text="CLEAR", font=("arial", 12, "bold"), width=9,
+                             fg="blue", bg="grey")
+        btnClearMed.grid(row=3, column=0)
+
+
+if __name__ == "__main__":
+    conn = c.connect(host="localhost", user="root", password='00b')
+    cs = conn.cursor()
+
+    cs.execute('create database if not exists pms')
+    cs.execute('use pms')
+    cs.execute('''create table if not exists pharmacy(ReferenceNo varchar(100), PatientName varchar(100), Type varchar(100), MedicineName varchar(100), IssueDate varchar(100),
+                ExpiryDate varchar(100), Warning varchar(100), Uses varchar(100), Dosage varchar(100), ProductQty varchar(100), Price varchar(100))''')
+
+    cs.execute('create table if not exists pharma(Ref varchar(100), MedName varchar(100))')
+
+    root = Tk()
+    obj = PharmacyManagementSystem(root)
+    root.mainloop()
